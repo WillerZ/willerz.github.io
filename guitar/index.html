@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Guitar</title>
+    </head>
+    <body>
+        <div id="output3mf"><input type="button" value="Calculate" onclick="calculate()"></input></div>
+        <script language="javascript" src="https://unpkg.com/@jscad/modeling"></script>
+        <script>
+            const loadStep = (url) => {
+                return new Promise(function (resolve, reject) {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", url);
+                    xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(xhr.response);
+                    } else {
+                        reject({
+                        status: xhr.status,
+                        statusText: xhr.statusText
+                        });
+                    }
+                    };
+                    xhr.onerror = function () {
+                    reject({
+                        status: xhr.status,
+                        statusText: xhr.statusText
+                    });
+                    };
+                    xhr.send();
+                });
+            }
+
+            const makeGuitar = (body, tools, shells) => {
+                return jscadModeling.booleans.union(jscadModeling.booleans.subtract(body, ...tools), ...shells);
+            }
+
+            function calculate() {
+                bodyReq = loadStep("body/phil.step");
+
+                neckPocketToolReq = loadStep("tool/neck/tele.step");
+                neckPickupToolReq = loadStep("tool/pickup/neck/humbucker.step");
+                bridgePickupToolReq = loadStep("tool/pickup/bridge/humbucker.step");
+                bridgeToolReq = loadStep("tool/bridge/musiclily-pro.step");
+
+                neckPocketShellReq = loadStep("shell/neck/tele.step");
+                neckPickupShellReq = loadStep("shell/pickup/neck/humbucker.step");
+                bridgePickupShellReq = loadStep("shell/pickup/bridge/humbucker.step");
+                bridgeShellReq = loadStep("shell/bridge/musiclily-pro.step");
+
+                Promise.all([
+                    bodyReq,
+                    Promise.all([
+                        neckPocketToolReq,
+                        neckPickupToolReq,
+                        bridgePickupToolReq,
+                        bridgeToolReq
+                    ]),
+                    Promise.all([
+                        neckPocketShellReq,
+                        neckPickupShellReq,
+                        bridgePickupShellReq,
+                        bridgeShellReq
+                    ])
+                ]).then(([body, tools, shells]) => {
+                    const guitarModel = makeGuitar(body, tools, shells);
+                    const guitarModels = jscadModeling.booleans.scission(guitarModel);
+                    document.getElementById("output3mf").innerHTML = guitarModels;
+                }).catch(err => {
+                    document.getElementById("output3mf").innerHTML = "Nope";
+                });
+            }
+        </script>
+    </body>
+</html>
