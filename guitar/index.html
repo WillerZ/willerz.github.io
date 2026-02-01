@@ -4,16 +4,25 @@
         <title>Guitar</title>
     </head>
     <body>
-        <div id="output3mf"><input type="button" value="Calculate" onclick="calculate()"></input></div>
+        <div id="output3mf"><input id="calculateButton" type="button" value="Calculate"></input></div>
         <script language="javascript" src="https://unpkg.com/@jscad/modeling"></script>
-        <script>
-            const loadStep = (url) => {
+        <!-- <script language="javascript" src="https://unpkg.com/@jscad/3mf-deserializer"></script> -->
+        <!-- <script language="javascript" src="https://unpkg.com/@jscad/3mf-serializer"></script> -->
+        <script type="module">
+            // import * as jscadModeling from "https://unpkg.com/@jscad/modeling";
+            // import * as jscad3MFDeserializer from "https://unpkg.com/@jscad/3mf-deserializer";
+            // import * as jscad3MFSrializer from "https://unpkg.com/@jscad/3mf-serializer";
+
+            const load3mf = (url) => {
                 return new Promise(function (resolve, reject) {
                     var xhr = new XMLHttpRequest();
                     xhr.open("GET", url);
+                    xhr.responseType = "blob";
                     xhr.onload = function () {
                     if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(xhr.response);
+                        const geometry = xhr.response;
+                        // const geometry = jscad3MFDeserializer.deserialize({output: 'geometry'}, xhr.response);
+                        resolve(geometry);
                     } else {
                         reject({
                         status: xhr.status,
@@ -31,45 +40,40 @@
                 });
             }
 
-            const makeGuitar = (body, tools, shells) => {
-                return jscadModeling.booleans.union(jscadModeling.booleans.subtract(body, ...tools), ...shells);
-            }
-
             function calculate() {
-                bodyReq = loadStep("body/phil.step");
+                const bodyReq = load3mf("body/batlike.3MF");
+                const pickguardReq = load3mf("body/batlike-guard.3MF");
+                const controlPlateReq = load3mf("body/batlike-cover.3MF");
 
-                neckPocketToolReq = loadStep("tool/neck/tele.step");
-                neckPickupToolReq = loadStep("tool/pickup/neck/humbucker.step");
-                bridgePickupToolReq = loadStep("tool/pickup/bridge/humbucker.step");
-                bridgeToolReq = loadStep("tool/bridge/musiclily-pro.step");
-
-                neckPocketShellReq = loadStep("shell/neck/tele.step");
-                neckPickupShellReq = loadStep("shell/pickup/neck/humbucker.step");
-                bridgePickupShellReq = loadStep("shell/pickup/bridge/humbucker.step");
-                bridgeShellReq = loadStep("shell/bridge/musiclily-pro.step");
+                const neckPocketToolReq = load3mf("tool/neck/strat.3MF");
+                const neckPickupToolReq = load3mf("tool/pickup/neck/humbucker.3MF");
+                const bridgePickupToolReq = load3mf("tool/pickup/bridge/humbucker.3MF");
+                const bridgeToolReq = load3mf("tool/bridge/musiclily-ultra.3MF");
 
                 Promise.all([
                     bodyReq,
+                    pickguardReq,
+                    controlPlateReq,
                     Promise.all([
                         neckPocketToolReq,
                         neckPickupToolReq,
                         bridgePickupToolReq,
                         bridgeToolReq
                     ]),
-                    Promise.all([
-                        neckPocketShellReq,
-                        neckPickupShellReq,
-                        bridgePickupShellReq,
-                        bridgeShellReq
-                    ])
-                ]).then(([body, tools, shells]) => {
-                    const guitarModel = makeGuitar(body, tools, shells);
-                    const guitarModels = jscadModeling.booleans.scission(guitarModel);
-                    document.getElementById("output3mf").innerHTML = guitarModels;
+                ]).then(([body, pickguard, controlPlate, tools]) => {
+                    const guitarModel = jscadModeling.booleans.subtract(body, ...tools);
+                    const guitarModelBlob = guitarModel; // TODO - serialize once that's supported
+                    const pickguardModel = jscadModeling.booleans.subtract(pickguard, ...tools);
+                    const pickguardModelBlob = pickguardModel; // TODO - serialize once that's supported
+                    const controlPlateModel = jscadModeling.booleans.subtract(controlPlate, ...tools);
+                    const controlPlateModelBlob = guitarModel; // TODO - serialize once that's supported
+                    document.getElementById("output3mf").innerHTML = '<a download="body.3mf" href="' + URL.createObjectURL(guitarModelBlob) + '">Download the body model</a>, '+ '<a download="pickguard.3mf" href="' + URL.createObjectURL(pickguardModelBlob) + '">Download the pickguard model</a>, and ' + '<a download="controlPlate.3mf" href="' + URL.createObjectURL(controlPlateModelBlob) + '">Download the control plate model</a>, ';
                 }).catch(err => {
-                    document.getElementById("output3mf").innerHTML = "Nope";
+                    document.getElementById("output3mf").innerHTML = "Well, that didn't work. Sorry.";
                 });
             }
+
+            document.getElementById("calculateButton").addEventListener("click", () => {calculate();});
         </script>
     </body>
 </html>
