@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html>
-    <head>
+    <head>        
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-3HVY4J2C28"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-3HVY4J2C28');
+        </script>
+        <!-- End of Google tag (gtag.js) -->
         <link rel="modulepreload" href="./worker.js">
         <link rel="modulepreload" href="./deps/openscad-2026.02.01/openscad.js">
-        <link rel="preload" as="fetch" href="./body/batlike.3MF" crossorigin="anonymous">
-        <link rel="preload" as="fetch" href="./body/batlike-guard.3MF" crossorigin="anonymous">
-        <link rel="preload" as="fetch" href="./body/batlike-cover.3MF" crossorigin="anonymous">
-        <link rel="preload" as="fetch" href="./tool/neck/strat.3MF" crossorigin="anonymous">
-        <link rel="preload" as="fetch" href="./tool/pickup/neck/humbucker.3MF" crossorigin="anonymous">
-        <link rel="preload" as="fetch" href="./tool/pickup/bridge/humbucker.3MF" crossorigin="anonymous">
-        <link rel="preload" as="fetch" href="./tool/bridge/musiclily-ultra.3MF" crossorigin="anonymous">
-        <link rel="preload" as="fetch" href="./scripts/body.scad" crossorigin="anonymous">
-        <link rel="preload" as="fetch" href="./scripts/pickguard.scad" crossorigin="anonymous">
-        <link rel="preload" as="fetch" href="./scripts/control-cover.scad" crossorigin="anonymous">
         <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="shortcut icon" href="/favicon.ico" />
@@ -21,18 +21,80 @@
         <title>Guitar</title>
     </head>
     <body>
-        <input id="calculateButton" type="button" value="Calculate"></input>
+        <label for="body-select">Choose the body style:</label>
+        <select name="body" id="body-select">
+            <option value="batlike">Bat-like</option>
+        </select><br>
+        <label for="neckSocket-select">Choose the neck socket fitment:</label>
+        <select name="neckSocket" id="neckSocket-select">
+            <option value="tool/neck/strat.3MF">Strat</option>
+            <option value="tool/neck/tele.3MF">Tele</option>
+        </select><br>
+        <label for="neckPickup-select">Choose the neck pickup type:</label>
+        <select name="neckPickup" id="neckPickup-select">
+            <option value="">None</option>
+            <option value="tool/pickup/neck/humbucker.3MF">Humbucker</option>
+        </select><br>
+        <label for="middlePickup-select">Choose the middle pickup type:</label>
+        <select name="middlePickup" id="middlePickup-select">
+            <option value="">None</option>
+        </select><br>
+        <label for="bridgePickup-select">Choose the bridge pickup type:</label>
+        <select name="bridgePickup" id="bridgePickup-select">
+            <option value="">None</option>
+            <option value="tool/pickup/bridge/humbucker.3MF">Humbucker</option>
+        </select><br>
+        <label for="bridge-select">Choose the bridge type:</label>
+        <select name="bridge" id="bridge-select">
+            <option value="tool/bridge/musiclily-ultra.3MF">Musiclily Ultra 52.5mm Hardtail</option>
+        </select><br>
+        <input id="calculateButton" type="button" value="Build my Guitar"></input><br>
         <div id="output3mf"></div>
         <script type="module">
             const cadWorker = new Worker('./worker.js', {type:"module"});
 
-            cadWorker.onmessage = (msg) => {
-                document.getElementById("output3mf").innerHTML = msg.data;
+            const bodies = {
+                'batlike': [
+                        "body/batlike.3MF",
+                        "body/batlike-guard.3MF",
+                        "body/batlike-cover.3MF",
+                    ],
             };
 
-            document.getElementById("calculateButton").addEventListener("click", () => {cadWorker.postMessage('go');});
+            cadWorker.onmessage = (msg) => {
+                document.getElementById("output3mf").innerHTML = msg.data.join("<br>");
+                document.getElementById("output3mf").firstElementChild.addEventListener("click", () => {
+                    gtag('event', 'dl_guitar', {
+                        'bodyStyle': document.getElementById("body-select").value,
+                        'neckSocket': document.getElementById("neckSocket-select").value,
+                        'neckPickup': document.getElementById("neckPickup-select").value,
+                        'middlePickup': document.getElementById("middlePickup-select").value,
+                        'bridgePickup': document.getElementById("bridgePickup-select").value,
+                        'bridge': document.getElementById("bridge-select").value
+                    }); 
+                });
+            };
 
-            cadWorker.postMessage('autogo');
+            document.getElementById("calculateButton").addEventListener("click", () => {
+                gtag('event', 'build_guitar', {
+                    'bodyStyle': document.getElementById("body-select").value,
+                    'neckSocket': document.getElementById("neckSocket-select").value,
+                    'neckPickup': document.getElementById("neckPickup-select").value,
+                    'middlePickup': document.getElementById("middlePickup-select").value,
+                    'bridgePickup': document.getElementById("bridgePickup-select").value,
+                    'bridge': document.getElementById("bridge-select").value
+                });
+                cadWorker.postMessage({
+                    bodies: bodies[document.getElementById("body-select").value],
+                    tools: [
+                        document.getElementById("neckSocket-select").value,
+                        document.getElementById("neckPickup-select").value,
+                        document.getElementById("middlePickup-select").value,
+                        document.getElementById("bridgePickup-select").value,
+                        document.getElementById("bridge-select").value,
+                    ].filter(Boolean)
+                });
+            });
         </script>
     </body>
 </html>
