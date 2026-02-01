@@ -33,6 +33,9 @@
         <label for="body-select">Choose the body style:</label>
         <select name="body" id="body-select">
             <option value="batlike">Bat-like</option>
+            <option value="later">Later</option>
+            <option value="starter">Starter</option>
+            <option value="tasteful">Tasteful</option>
         </select><br>
         <label for="neckSocket-select">Choose the neck socket fitment:</label>
         <select name="neckSocket" id="neckSocket-select">
@@ -43,19 +46,30 @@
         <select name="neckPickup" id="neckPickup-select">
             <option value="">None</option>
             <option value="tool/pickup/neck/humbucker.3MF">Humbucker</option>
+            <option value="tool/pickup/neck/jazzmaster.3MF">Jazzmaster</option>
+            <option value="tool/pickup/neck/p90.3MF">P-90</option>
+            <option value="tool/pickup/neck/strat.3MF">Stratocaster</option>
+            <option value="tool/pickup/neck/tele.3MF">Telecaster</option>
         </select><br>
         <label for="middlePickup-select">Choose the middle pickup type:</label>
         <select name="middlePickup" id="middlePickup-select">
             <option value="">None</option>
+            <option value="tool/pickup/middle/strat.3MF">Stratocaster</option>
         </select><br>
         <label for="bridgePickup-select">Choose the bridge pickup type:</label>
         <select name="bridgePickup" id="bridgePickup-select">
             <option value="">None</option>
             <option value="tool/pickup/bridge/humbucker.3MF">Humbucker</option>
+            <option value="tool/pickup/bridge/jazzmaster.3MF">Jazzmaster</option>
+            <option value="tool/pickup/bridge/p90.3MF">P-90</option>
+            <option value="tool/pickup/bridge/strat.3MF">Stratocaster</option>
+            <option value="tool/pickup/bridge/tele.3MF">Telecaster</option>
         </select><br>
         <label for="bridge-select">Choose the bridge type:</label>
         <select name="bridge" id="bridge-select">
+            <option value="tool/bridge/guyker-roller-TOM.3MF">Guyker Roller Tune-O-Matic Style</option>
             <option value="tool/bridge/musiclily-ultra.3MF">Musiclily Ultra 52.5mm Hardtail</option>
+            <option value="tool/bridge/schaller-3d6.3MF">Schaller 3D6</option>
         </select><br>
         <input id="calculateButton" type="button" value="Build my Guitar"></input><br>
         <div id="output3mf"></div>
@@ -67,6 +81,18 @@
                         "body/batlike.3MF",
                         "body/batlike-guard.3MF",
                         "body/batlike-cover.3MF",
+                    ],
+                'later': [
+                        "body/later.3MF",
+                        "body/later-guard.3MF",
+                    ],
+                'starter': [
+                        "body/starter.3MF",
+                        "body/starter-guard.3MF",
+                    ],
+                'tasteful': [
+                        "body/tasteful.3MF",
+                        "body/tasteful-guard.3MF",
                     ],
             };
 

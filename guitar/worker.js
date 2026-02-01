@@ -60,7 +60,7 @@ async function computeGuitar(msg) {
 
         cads.map((cad, index) => {
             prepareCad(cad, bodies[index], tools);
-            cad.callMain(["/script.scad", "-o", "/output.stl"]);
+            cad.callMain(["/script.scad", "--backend", "Manifold", "-o", "/output.stl"]);
             const blob = new Blob([cad.FS.readFile("/output.stl")], { type: "model/stl" });
             links.push(`<a download="part${index + 1}.stl" href="${URL.createObjectURL(blob)}">Download STL for part ${index + 1}</a>`);
         });
