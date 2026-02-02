@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
-    <head>        
+    <head>
+        <link rel="stylesheet" href="//willerz.github.io/assets/css/style.css" media="screen" type="text/css">
+        <link rel="stylesheet" href="//willerz.github.io/assets/css/print.css" media="print" type="text/css">
         <!-- Google tag (gtag.js) -->
         <script>
             window.dataLayer = window.dataLayer || [];
@@ -30,49 +32,82 @@
         <title>Guitar</title>
     </head>
     <body>
-        <label for="body-select">Choose the body style:</label>
-        <select name="body" id="body-select">
-            <option value="batlike">Bat-like</option>
-            <option value="later">Later</option>
-            <option value="starter">Starter</option>
-            <option value="tasteful">Tasteful</option>
-        </select><br>
-        <label for="neckSocket-select">Choose the neck socket fitment:</label>
-        <select name="neckSocket" id="neckSocket-select">
-            <option value="tool/neck/strat.3MF">Strat</option>
-            <option value="tool/neck/tele.3MF">Tele</option>
-        </select><br>
-        <label for="neckPickup-select">Choose the neck pickup type:</label>
-        <select name="neckPickup" id="neckPickup-select">
-            <option value="">None</option>
-            <option value="tool/pickup/neck/humbucker.3MF">Humbucker</option>
-            <option value="tool/pickup/neck/jazzmaster.3MF">Jazzmaster</option>
-            <option value="tool/pickup/neck/p90.3MF">P-90</option>
-            <option value="tool/pickup/neck/strat.3MF">Stratocaster</option>
-            <option value="tool/pickup/neck/tele.3MF">Telecaster</option>
-        </select><br>
-        <label for="middlePickup-select">Choose the middle pickup type:</label>
-        <select name="middlePickup" id="middlePickup-select">
-            <option value="">None</option>
-            <option value="tool/pickup/middle/strat.3MF">Stratocaster</option>
-        </select><br>
-        <label for="bridgePickup-select">Choose the bridge pickup type:</label>
-        <select name="bridgePickup" id="bridgePickup-select">
-            <option value="">None</option>
-            <option value="tool/pickup/bridge/humbucker.3MF">Humbucker</option>
-            <option value="tool/pickup/bridge/jazzmaster.3MF">Jazzmaster</option>
-            <option value="tool/pickup/bridge/p90.3MF">P-90</option>
-            <option value="tool/pickup/bridge/strat.3MF">Stratocaster</option>
-            <option value="tool/pickup/bridge/tele.3MF">Telecaster</option>
-        </select><br>
-        <label for="bridge-select">Choose the bridge type:</label>
-        <select name="bridge" id="bridge-select">
-            <option value="tool/bridge/guyker-roller-TOM.3MF">Guyker Roller Tune-O-Matic Style</option>
-            <option value="tool/bridge/musiclily-ultra.3MF">Musiclily Ultra 52.5mm Hardtail</option>
-            <option value="tool/bridge/schaller-3d6.3MF">Schaller 3D6</option>
-        </select><br>
-        <input id="calculateButton" type="button" value="Build my Guitar"></input><br>
-        <div id="output3mf"></div>
+        <header>
+            <div class="inner">
+                <a href="https://willerz.github.io/">
+                <h1>Phil Willoughby</h1>
+                </a>
+                <h2>Greetings</h2>
+                <a href="https://github.com/WillerZ" class="button"><small>Follow me on</small> GitHub</a>
+            </div>
+        </header>
+        <div id="content-wrapper">
+            <div class="inner clearfix">
+                <section id="main-content">
+                    <h1>Guitar Designer</h1>
+                    <p>Be warned! This is a proof-of-concept and some of the combinations are known to be incomplete at this time.</p>
+                    <p>Usage instructions:</p>
+                    <p>Make your choices, click the button to build the guitar, download the 2 or 3 STL files, print them.</p>
+                    <p>
+                        <label for="body-select">Choose the body style:</label>
+                        <select name="body" id="body-select">
+                            <option value="batlike">Bat-like</option>
+                            <option value="later">Later</option>
+                            <option value="starter">Starter</option>
+                            <option value="tasteful">Tasteful</option>
+                        </select>
+                    </p>
+                    <p>
+                        <label for="neckSocket-select">Choose the neck socket fitment:</label>
+                        <select name="neckSocket" id="neckSocket-select">
+                            <option value="tool/neck/strat.3MF">Strat</option>
+                            <option value="tool/neck/tele.3MF">Tele</option>
+                        </select>
+                    </p>
+                    <p>
+                        <label for="neckPickup-select">Choose the neck pickup type:</label>
+                        <select name="neckPickup" id="neckPickup-select">
+                            <option value="">None</option>
+                            <option value="tool/pickup/neck/humbucker.3MF">Humbucker</option>
+                            <option value="tool/pickup/neck/jazzmaster.3MF">Jazzmaster</option>
+                            <option value="tool/pickup/neck/p90.3MF">P-90</option>
+                            <option value="tool/pickup/neck/strat.3MF">Stratocaster</option>
+                            <option value="tool/pickup/neck/tele.3MF">Telecaster</option>
+                        </select>
+                    </p>
+                    <p>
+                        <label for="middlePickup-select">Choose the middle pickup type:</label>
+                        <select name="middlePickup" id="middlePickup-select">
+                            <option value="">None</option>
+                            <option value="tool/pickup/middle/strat.3MF">Stratocaster</option>
+                        </select>
+                    </p>
+                    <p>
+                        <label for="bridgePickup-select">Choose the bridge pickup type:</label>
+                        <select name="bridgePickup" id="bridgePickup-select">
+                            <option value="">None</option>
+                            <option value="tool/pickup/bridge/humbucker.3MF">Humbucker</option>
+                            <option value="tool/pickup/bridge/jazzmaster.3MF">Jazzmaster</option>
+                            <option value="tool/pickup/bridge/p90.3MF">P-90</option>
+                            <option value="tool/pickup/bridge/strat.3MF">Stratocaster</option>
+                            <option value="tool/pickup/bridge/tele.3MF">Telecaster</option>
+                        </select>
+                    </p>
+                    <p>
+                        <label for="bridge-select">Choose the bridge type:</label>
+                        <select name="bridge" id="bridge-select">
+                            <option value="tool/bridge/guyker-roller-TOM.3MF">Guyker Roller Tune-O-Matic Style</option>
+                            <option value="tool/bridge/musiclily-ultra.3MF">Musiclily Ultra 52.5mm Hardtail</option>
+                            <option value="tool/bridge/schaller-3d6.3MF">Schaller 3D6</option>
+                        </select>
+                    </p>
+                    <p>
+                    <button id="calculateButton" class="button">Build my Guitar</button>
+                    </p>
+                    <div id="output3mf"></div>
+                </section>
+            </div>
+        </div>
         <script type="module">
             const cadWorker = new Worker('./worker.js', {type:"module"});
 
@@ -97,7 +132,7 @@
             };
 
             cadWorker.onmessage = (msg) => {
-                document.getElementById("output3mf").innerHTML = msg.data.join("<br>");
+                document.getElementById("output3mf").innerHTML = `<p>Guitar built, here are the parts you need to print:</p><p>${msg.data.join("</p><p>")}</p>`;
                 document.getElementById("output3mf").firstElementChild.addEventListener("click", () => {
                     gtag('event', 'dl_guitar', {
                         'bodyStyle': document.getElementById("body-select").value,
