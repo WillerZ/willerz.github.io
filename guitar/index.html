@@ -15,10 +15,10 @@
                 'ad_storage': 'denied',
                 'ad_user_data': 'denied',
                 'ad_personalization': 'denied',
-                'analytics_storage': 'denied'
+                'analytics_storage': 'denied',
+                'wait_for_update': 1,
             });
             gtag('js', new Date());
-
             gtag('config', 'G-3HVY4J2C28');
         </script>
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-3HVY4J2C28"></script>
@@ -131,29 +131,55 @@
                     ],
             };
 
+            const makeBuildEvent = () => {
+                const buildEvent = {
+                    'bodyStyle': document.getElementById("body-select").value,
+                    'neckSocket': document.getElementById("neckSocket-select").value,
+                    'bridge': document.getElementById("bridge-select").value
+                };
+                if (document.getElementById("neckPickup-select").value) {
+                    buildEvent['neckPickup'] = document.getElementById("neckPickup-select").value;
+                }
+                if (document.getElementById("middlePickup-select").value) {
+                    buildEvent['middlePickup'] = document.getElementById("middlePickup-select").value;
+                }
+                if (document.getElementById("bridgePickup-select").value) {
+                    buildEvent['bridgePickup'] = document.getElementById("bridgePickup-select").value;
+                }
+                return buildEvent;
+            };
+
+            const makeItems = () => {
+                    return [
+                        `Body Style: ${document.getElementById("body-select").value}`,
+                        `Neck Attachment: ${document.getElementById("neckSocket-select").value.split('/').at(-1).replace('.3MF','')}`,
+                        `Bridge: ${document.getElementById("bridge-select").value.split('/').at(-1).replace('.3MF','')}`,
+                        document.getElementById("neckPickup-select").value ? `Neck Pickup: ${document.getElementById("neckPickup-select").value.split('/').at(-1).replace('.3MF','')}` : "",
+                        document.getElementById("middlePickup-select").value ? `Middle Pickup: ${document.getElementById("middlePickup-select").value.split('/').at(-1).replace('.3MF','')}` : "",
+                        document.getElementById("bridgePickup-select").value ? `Bridge Pickup: ${document.getElementById("bridgePickup-select").value.split('/').at(-1).replace('.3MF','')}` : "",
+                    ].filter(Boolean).map((name) => {return {'item_name':name}; });
+            };
+
             cadWorker.onmessage = (msg) => {
                 document.getElementById("output").innerHTML = `<p>Guitar built, here are the parts you need to print:</p><p>${msg.data.join("</p><p>")}</p>`;
-                document.getElementById("output").firstElementChild.addEventListener("click", () => {
-                    gtag('event', 'dl_guitar', {
-                        'bodyStyle': document.getElementById("body-select").value,
-                        'neckSocket': document.getElementById("neckSocket-select").value,
-                        'neckPickup': document.getElementById("neckPickup-select").value,
-                        'middlePickup': document.getElementById("middlePickup-select").value,
-                        'bridgePickup': document.getElementById("bridgePickup-select").value,
-                        'bridge': document.getElementById("bridge-select").value
-                    }); 
+                document.getElementById("output").children[1].firstElementChild.addEventListener("click", () => {
+                    gtag('event', 'dl_guitar', makeBuildEvent());
+                    gtag('event', 'begin_checkout', {
+                    'currency':'USD',
+                    'value':'1000.00',
+                    'items': makeItems(),
+                });
                 });
             };
 
             document.getElementById("calculateButton").addEventListener("click", () => {
                 document.getElementById("output").innerHTML = '<p>Building your guitar</p>';
-                gtag('event', 'build_guitar', {
-                    'bodyStyle': document.getElementById("body-select").value,
-                    'neckSocket': document.getElementById("neckSocket-select").value,
-                    'neckPickup': document.getElementById("neckPickup-select").value,
-                    'middlePickup': document.getElementById("middlePickup-select").value,
-                    'bridgePickup': document.getElementById("bridgePickup-select").value,
-                    'bridge': document.getElementById("bridge-select").value
+
+                gtag('event', 'build_guitar', makeBuildEvent());
+                gtag('event', 'add_to_cart', {
+                    'currency':'USD',
+                    'value':'1000.00',
+                    'items': makeItems(),
                 });
                 cadWorker.postMessage({
                     bodies: bodies[document.getElementById("body-select").value],
