@@ -131,6 +131,8 @@
                     ],
             };
 
+            let guitarUuid = "";
+
             const makeBuildEvent = () => {
                 const buildEvent = {
                     'bodyStyle': document.getElementById("body-select").value,
@@ -162,11 +164,13 @@
 
             cadWorker.onmessage = (msg) => {
                 document.getElementById("output").innerHTML = `<p>Guitar built, here are the parts you need to print:</p><p>${msg.data.join("</p><p>")}</p>`;
+                guitarUuid = crypto.randomUUID();
                 document.getElementById("output").children[1].firstElementChild.addEventListener("click", () => {
                     gtag('event', 'dl_guitar', makeBuildEvent());
-                    gtag('event', 'begin_checkout', {
+                    gtag('event', 'purchase', {
                     'currency':'USD',
                     'value':'1000.00',
+                    'transaction_id': guitarUuid,
                     'items': makeItems(),
                 });
                 });
