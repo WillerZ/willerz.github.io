@@ -28,12 +28,12 @@ async function load3mf(url) {
     return blob.arrayBuffer();
 }
 
-function prepareCad(cad, body, tools) {
+function prepareCad(cad, body, tools, fudge) {
     cad.FS.writeFile("/body.3MF", new Int8Array(body));
 
     const script = [
         "difference () {",
-        '    import("body.3MF");',
+        `    translate([0,${fudge},0]) { import("body.3MF"); }`,
     ];
 
     tools.map((tool, index)=>{
@@ -59,8 +59,10 @@ async function computeGuitar(msg) {
         const links = [];
 
         cads.map((cad, index) => {
-            prepareCad(cad, bodies[index], tools);
-            cad.callMain(["/script.scad", "--backend", "Manifold", "-o", "/output.stl"]);
+            // The last value, the "fudge" prevents zero-thickness geometry from being generated
+            // It does this by moving things 1/10mm away from the top plane.
+            prepareCad(cad, bodies[index], tools, index == 0 ? '-0.1' : '0.1');
+            cad.callMain(["/script.scad", "--quiet", "--backend", "Manifold", "-o", "/output.stl"]);
             const blob = new Blob([cad.FS.readFile("/output.stl")], { type: "model/stl" });
             links.push(`<a download="part${index + 1}.stl" href="${URL.createObjectURL(blob)}">Download STL for part ${index + 1}</a>`);
         });

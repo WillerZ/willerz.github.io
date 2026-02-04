@@ -2,8 +2,8 @@
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-        <link rel="stylesheet" href="//willerz.github.io/assets/css/style.css" media="screen" type="text/css">
-        <link rel="stylesheet" href="//willerz.github.io/assets/css/print.css" media="print" type="text/css">
+        <link rel="stylesheet" href="/assets/css/style.css" media="screen" type="text/css">
+        <link rel="stylesheet" href="/assets/css/print.css" media="print" type="text/css">
         <!-- Google tag (gtag.js) -->
         <script>
             window.dataLayer = window.dataLayer || [];
@@ -53,6 +53,7 @@
                             <option value="phil-signature">Phil's Signature</option>
                             <option value="starter">Starter</option>
                             <option value="tasteful">Tasteful</option>
+                            <option value="serif-a">A Guitar Store Logo</option>
                         </select>
                     </p>
                     <p>
@@ -138,6 +139,9 @@
                         "body/tasteful.3MF",
                         "body/tasteful-guard.3MF",
                     ],
+                'serif-a': [
+                        "body/serif-a.3MF",
+                    ],
             };
 
             let guitarUuid = "";
@@ -161,27 +165,30 @@
             };
 
             const makeItems = () => {
-                    return [
-                        `Body Style: ${document.getElementById("body-select").value}`,
-                        `Neck Attachment: ${document.getElementById("neckSocket-select").value.split('/').at(-1).replace('.3MF','')}`,
-                        `Bridge: ${document.getElementById("bridge-select").value.split('/').at(-1).replace('.3MF','')}`,
-                        document.getElementById("neckPickup-select").value ? `Neck Pickup: ${document.getElementById("neckPickup-select").value.split('/').at(-1).replace('.3MF','')}` : "",
-                        document.getElementById("middlePickup-select").value ? `Middle Pickup: ${document.getElementById("middlePickup-select").value.split('/').at(-1).replace('.3MF','')}` : "",
-                        document.getElementById("bridgePickup-select").value ? `Bridge Pickup: ${document.getElementById("bridgePickup-select").value.split('/').at(-1).replace('.3MF','')}` : "",
-                    ].filter(Boolean).map((name) => {return {'item_name':name}; });
+                const fileBaseNameFromPath = (path) => {
+                    return path.split('/').at(-1).split('.').slice(0,-1).join('.');
+                };
+                return [
+                    `Body Style: ${document.getElementById("body-select").value}`,
+                    `Neck Attachment: ${fileBaseNameFromPath(document.getElementById("neckSocket-select").value)}`,
+                    `Bridge: ${fileBaseNameFromPath(document.getElementById("bridge-select").value)}`,
+                    document.getElementById("neckPickup-select").value ? `Neck Pickup: ${fileBaseNameFromPath(document.getElementById("neckPickup-select").value)}` : "",
+                    document.getElementById("middlePickup-select").value ? `Middle Pickup: ${fileBaseNameFromPath(document.getElementById("middlePickup-select").value)}` : "",
+                    document.getElementById("bridgePickup-select").value ? `Bridge Pickup: ${fileBaseNameFromPath(document.getElementById("bridgePickup-select").value)}` : "",
+                ].filter(Boolean).map((name) => {return {'item_name':name}; });
             };
 
             cadWorker.onmessage = (msg) => {
                 document.getElementById("output").innerHTML = `<p>Guitar built, here are the parts you need to print:</p><p>${msg.data.join("</p><p>")}</p>`;
-                guitarUuid = crypto.randomUUID();
+                guitarUuid = crypto.randomUUID ? crypto.randomUUID() : "Testing";
                 document.getElementById("output").children[1].firstElementChild.addEventListener("click", () => {
                     gtag('event', 'dl_guitar', makeBuildEvent());
                     gtag('event', 'purchase', {
-                    'currency':'USD',
-                    'value':'1000.00',
-                    'transaction_id': guitarUuid,
-                    'items': makeItems(),
-                });
+                        'currency':'USD',
+                        'value':'1000.00',
+                        'transaction_id': guitarUuid,
+                        'items': makeItems(),
+                    });
                 });
             };
 
