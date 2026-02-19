@@ -4,25 +4,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
         <link rel="stylesheet" href="/assets/css/style.css" media="screen" type="text/css">
         <link rel="stylesheet" href="/assets/css/print.css" media="print" type="text/css">
-        <!-- Google tag (gtag.js) -->
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-
-            // Set consent to 'denied'
-            // I don't want to un-deny these for anyone, so no banner.
-            gtag('consent', 'default', {
-                'ad_storage': 'denied',
-                'ad_user_data': 'denied',
-                'ad_personalization': 'denied',
-                'analytics_storage': 'denied',
-                'wait_for_update': 1,
-            });
-            gtag('js', new Date());
-            gtag('config', 'G-6JP574KNYS');
-        </script>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-6JP574KNYS"></script>
-        <!-- End of Google tag (gtag.js) -->
         <link rel="modulepreload" href="./worker.js">
         <link rel="modulepreload" href="./deps/openscad-2026.02.01/openscad.js">
         <link rel="shortcut icon" href="/favicon.ico" />
@@ -180,27 +161,15 @@
 
             cadWorker.onmessage = (msg) => {
                 document.getElementById("output").innerHTML = `<p>Guitar built, here are the parts you need to print:</p><p>${msg.data.join("</p><p>")}</p>`;
-                guitarUuid = crypto.randomUUID ? crypto.randomUUID() : "Testing";
                 document.getElementById("output").children[1].firstElementChild.addEventListener("click", () => {
-                    gtag('event', 'dl_guitar', makeBuildEvent());
-                    gtag('event', 'purchase', {
-                        'currency':'USD',
-                        'value':'1000.00',
-                        'transaction_id': guitarUuid,
-                        'items': makeItems(),
-                    });
+                    // Todo: report download event
                 });
             };
 
             document.getElementById("calculateButton").addEventListener("click", () => {
                 document.getElementById("output").innerHTML = '<p>Building your guitar</p>';
 
-                gtag('event', 'build_guitar', makeBuildEvent());
-                gtag('event', 'add_to_cart', {
-                    'currency':'USD',
-                    'value':'1000.00',
-                    'items': makeItems(),
-                });
+                // Todo: report guitar-design event
                 cadWorker.postMessage({
                     bodies: bodies[document.getElementById("body-select").value],
                     tools: [
@@ -213,5 +182,6 @@
                 });
             });
         </script>
+        <script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>   
     </body>
 </html>
