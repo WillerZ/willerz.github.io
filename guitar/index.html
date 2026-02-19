@@ -165,7 +165,7 @@
             cadWorker.onmessage = (msg) => {
                 document.getElementById("output").innerHTML = `<p>Guitar built, here are the parts you need to print:</p><p>${msg.data.join("</p><p>")}</p>`;
                 document.getElementById("output").children[1].firstElementChild.addEventListener("click", () => {
-                    window.sa_event("stl_download");
+                    window.sa_event("stl_download", window.sa_metadata);
                 });
             };
 
@@ -173,7 +173,7 @@
                 document.getElementById("output").innerHTML = '<p>Building your guitar</p>';
 
                 updateEventMetadata();
-                window.sa_event("design_clicked");
+                window.sa_event("design_clicked", window.sa_metadata);
 
                 cadWorker.postMessage({
                     bodies: bodies[document.getElementById("body-select").value],
