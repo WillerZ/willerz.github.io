@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <link rel="stylesheet" href="/assets/css/style.css" media="screen" type="text/css">
+        <link rel="stylesheet" href="/assets/css/print.css" media="print" type="text/css">
+        <link rel="modulepreload" href="./worker.js">
+        <link rel="modulepreload" href="./deps/ball-flight/ni_slow/index.js">
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <title>Golf Ball Flight</title>
+        <style>
+            .flight-form fieldset {
+                border: 1px solid #d8d8d8;
+                margin: 0 0 1em;
+                padding: 0.8em 1em 1em;
+            }
+
+            .flight-form legend {
+                font-weight: bold;
+                padding: 0 0.35em;
+            }
+
+            .control-grid {
+                display: grid;
+                grid-template-columns: minmax(8em, 1fr) minmax(7em, 11em) minmax(5.5em, 7em);
+                gap: 0.65em 0.75em;
+                align-items: center;
+            }
+
+            .control-grid label {
+                font-weight: bold;
+            }
+
+            .control-grid input,
+            .control-grid select {
+                box-sizing: border-box;
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .control-grid .unit-note {
+                color: #666;
+                font-size: 0.9em;
+            }
+
+            .form-actions {
+                margin: 1em 0;
+            }
+
+            .status {
+                min-height: 1.5em;
+            }
+
+            .highlights {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(8.5em, 1fr));
+                gap: 0.8em 1em;
+                margin: 1em 0;
+            }
+
+            .highlights div {
+                border-top: 3px solid #d8d8d8;
+                padding-top: 0.45em;
+            }
+
+            .highlights dt {
+                color: #666;
+                font-size: 0.9em;
+            }
+
+            .highlights dd {
+                font-size: 1.25em;
+                font-weight: bold;
+                margin: 0.1em 0 0;
+            }
+
+            .plot-wrap {
+                margin-top: 1em;
+                overflow-x: auto;
+            }
+
+            #flight-plot {
+                display: block;
+                width: 100%;
+                min-width: 520px;
+                height: auto;
+                background: #fafafa;
+                border: 1px solid #d8d8d8;
+            }
+
+            #flight-plot .axis {
+                stroke: #a8a8a8;
+                stroke-width: 1;
+            }
+
+            #flight-plot .phase-carry {
+                stroke: #2f7d32;
+            }
+
+            #flight-plot .phase-bounce {
+                stroke: #d36f16;
+            }
+
+            #flight-plot .phase-roll {
+                stroke: #2b6ca3;
+            }
+
+            #flight-plot .plot-label {
+                fill: #333;
+                font-size: 18px;
+                font-weight: bold;
+            }
+
+            #flight-plot .plot-small {
+                fill: #666;
+                font-size: 13px;
+            }
+
+            @media screen and (max-width: 640px) {
+                .control-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+        <!-- Begin block for SimpleAnalytics event recording -->
+        <script>window.sa_event=window.sa_event||function(){var a=[].slice.call(arguments);window.sa_event.q?window.sa_event.q.push(a):window.sa_event.q=[a]};</script>
+        <!-- End block for SimpleAnalytics event recording -->
+    </head>
+    <body>
+        <header>
+            <div class="inner">
+                <a href="https://willerz.github.io/">
+                <h1>Phil Willoughby</h1>
+                </a>
+                <h2>Greetings</h2>
+                <a href="https://github.com/WillerZ" class="button"><small>Follow me on</small> GitHub</a>
+            </div>
+        </header>
+        <div id="content-wrapper">
+            <div class="inner clearfix">
+                <section id="main-content">
+                    <h1>Golf Ball Flight Explorer</h1>
+                    <form id="flight-form" class="flight-form">
+                        <fieldset>
+                            <legend>Launch</legend>
+                            <div class="control-grid">
+                                <label for="ballSpeed">Ball speed</label>
+                                <input id="ballSpeed" name="ballSpeed" type="number" min="0" step="any" required placeholder="130">
+                                <select id="speedUnit" name="speedUnit" aria-label="Ball speed unit">
+                                    <option value="mph" selected>mph</option>
+                                    <option value="mps">m/s</option>
+                                    <option value="kph">kph</option>
+                                </select>
+
+                                <label for="launchAngle">Launch angle</label>
+                                <input id="launchAngle" name="launchAngle" type="number" step="any" required placeholder="16">
+                                <select id="angleUnit" name="angleUnit" aria-label="Angle unit">
+                                    <option value="deg" selected>deg</option>
+                                    <option value="rad">rad</option>
+                                </select>
+
+                                <label for="azimuth">Azimuth</label>
+                                <input id="azimuth" name="azimuth" type="number" step="any" required placeholder="0">
+                                <span class="unit-note">same angle unit</span>
+
+                                <label for="backspin">Backspin</label>
+                                <input id="backspin" name="backspin" type="number" min="0" step="any" required placeholder="2500">
+                                <select id="spinUnit" name="spinUnit" aria-label="Spin unit">
+                                    <option value="rpm" selected>rpm</option>
+                                    <option value="hz">Hz</option>
+                                    <option value="rads">rad/s</option>
+                                </select>
+
+                                <label for="sidespin">Sidespin</label>
+                                <input id="sidespin" name="sidespin" type="number" step="any" required placeholder="0">
+                                <span class="unit-note">right positive</span>
+                            </div>
+                        </fieldset>
+
+                        <fieldset>
+                            <legend>Atmosphere</legend>
+                            <div class="control-grid">
+                                <label for="temperature">Temperature</label>
+                                <input id="temperature" name="temperature" type="number" step="any" required value="59">
+                                <select id="temperatureUnit" name="temperatureUnit" aria-label="Temperature unit">
+                                    <option value="f" selected>F</option>
+                                    <option value="c">C</option>
+                                    <option value="k">K</option>
+                                    <option value="r">R</option>
+                                </select>
+
+                                <label for="altitude">Altitude</label>
+                                <input id="altitude" name="altitude" type="number" step="any" required value="0">
+                                <select id="altitudeUnit" name="altitudeUnit" aria-label="Altitude unit">
+                                    <option value="ft" selected>ft</option>
+                                    <option value="m">m</option>
+                                </select>
+
+                                <label for="humidity">Humidity</label>
+                                <input id="humidity" name="humidity" type="number" min="0" max="100" step="any" required value="0">
+                                <span class="unit-note">percent</span>
+                            </div>
+                        </fieldset>
+
+                        <p class="form-actions">
+                            <button id="plotButton" class="button" type="submit" disabled>Plot</button>
+                        </p>
+                    </form>
+
+                    <p id="status" class="status">Enter launch conditions to plot a shot.</p>
+
+                    <dl id="highlights" class="highlights" hidden>
+                        <div>
+                            <dt>Peak height</dt>
+                            <dd id="peakHeight">-</dd>
+                        </div>
+                        <div>
+                            <dt>Carry distance</dt>
+                            <dd id="carryDistance">-</dd>
+                        </div>
+                        <div>
+                            <dt>Total distance</dt>
+                            <dd id="totalDistance">-</dd>
+                        </div>
+                        <div>
+                            <dt>Landing angle</dt>
+                            <dd id="landingAngle">-</dd>
+                        </div>
+                        <div>
+                            <dt>Offline at carry</dt>
+                            <dd id="offlineCarry">-</dd>
+                        </div>
+                        <div>
+                            <dt>Offline at total</dt>
+                            <dd id="offlineTotal">-</dd>
+                        </div>
+                    </dl>
+
+                    <div id="plot-wrap" class="plot-wrap" hidden>
+                        <svg id="flight-plot" role="img" aria-label="Golf ball flight plot"></svg>
+                    </div>
+                </section>
+                <aside id="sidebar">
+                    <p>Flight model source is vendored from the local ball-flight library.</p>
+                    <p>
+                        <a href="https://dashboard.simpleanalytics.com/willerz.github.io?utm_source=willerz.github.io&utm_content=badge&affiliate=gahop" referrerpolicy="origin" target="_blank">
+                            <picture>
+                                <source srcset="https://simpleanalyticsbadges.com/willerz.github.io?logo=rgb(40,121,208)&text=rgb(40,121,208)&background=rgb(250,250,250)" />
+                                <img src="https://simpleanalyticsbadges.com/willerz.github.io?mode=light" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous" />
+                            </picture>
+                        </a>
+                    </p>
+                </aside>
+            </div>
+        </div>
+        <script type="module">
+            const form = document.getElementById("flight-form");
+            const plotButton = document.getElementById("plotButton");
+            const status = document.getElementById("status");
+            const highlights = document.getElementById("highlights");
+            const plotWrap = document.getElementById("plot-wrap");
+            const plot = document.getElementById("flight-plot");
+
+            const requiredNumberFields = [
+                "ballSpeed",
+                "launchAngle",
+                "azimuth",
+                "backspin",
+                "sidespin",
+                "temperature",
+                "altitude",
+                "humidity"
+            ];
+
+            const phaseStyles = {
+                carry: { label: "Carry", className: "phase-carry" },
+                bounce: { label: "Bounce", className: "phase-bounce" },
+                roll: { label: "Roll", className: "phase-roll" }
+            };
+
+            let currentWorker = null;
+            let requestId = 0;
+
+            const numberIsFilled = (fieldName) => {
+                const element = form.elements[fieldName];
+                return element.value.trim() !== "" && Number.isFinite(Number(element.value));
+            };
+
+            const formIsReady = () => {
+                return requiredNumberFields.every(numberIsFilled) && form.checkValidity();
+            };
+
+            const updateButtonState = () => {
+                plotButton.disabled = currentWorker !== null || !formIsReady();
+            };
+
+            form.addEventListener("input", updateButtonState);
+            form.addEventListener("change", updateButtonState);
+
+            const collectForm = () => {
+                return Object.fromEntries(new FormData(form).entries());
+            };
+
+            const formatFixed = (value, decimals) => {
+                return Number(value).toFixed(decimals).replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
+            };
+
+            const displayDistance = (metres, speedUnit, kind) => {
+                if (speedUnit === "mph") {
+                    if (kind === "height") {
+                        return `${formatFixed(metres * 3.280839895, 1)} ft`;
+                    }
+                    return `${formatFixed(metres * 1.093613298, 1)} yd`;
+                }
+                return `${formatFixed(metres, 1)} m`;
+            };
+
+            const displayOffline = (metres, speedUnit) => {
+                const suffix = metres > 0.025 ? " R" : metres < -0.025 ? " L" : "";
+                return `${displayDistance(Math.abs(metres), speedUnit, "distance")}${suffix}`;
+            };
+
+            const displayAngle = (radians, angleUnit) => {
+                if (angleUnit === "rad") {
+                    return `${formatFixed(radians, 3)} rad`;
+                }
+                return `${formatFixed(radians * 180 / Math.PI, 1)} deg`;
+            };
+
+            const setHighlight = (id, value) => {
+                document.getElementById(id).textContent = value;
+            };
+
+            const renderHighlights = (simulation, units) => {
+                const values = simulation.highlights;
+                setHighlight("peakHeight", displayDistance(values.peakHeightM, units.speedUnit, "height"));
+                setHighlight("carryDistance", displayDistance(values.carryDistanceM, units.speedUnit, "distance"));
+                setHighlight("totalDistance", displayDistance(values.totalDistanceM, units.speedUnit, "distance"));
+                setHighlight("landingAngle", displayAngle(values.landingAngleRad, units.angleUnit));
+                setHighlight("offlineCarry", displayOffline(values.offlineCarryM, units.speedUnit));
+                setHighlight("offlineTotal", displayOffline(values.offlineTotalM, units.speedUnit));
+                highlights.hidden = false;
+            };
+
+            const collectPhaseSegments = (points) => {
+                const segments = { carry: [], bounce: [], roll: [] };
+                let previous = null;
+                let currentPhase = "";
+                let currentSegment = [];
+
+                for (const point of points) {
+                    if (point.phase !== currentPhase) {
+                        if (currentPhase && currentSegment.length > 1) {
+                            segments[currentPhase].push(currentSegment);
+                        }
+                        currentSegment = previous ? [previous, point] : [point];
+                        currentPhase = point.phase;
+                    } else {
+                        currentSegment.push(point);
+                    }
+                    previous = point;
+                }
+
+                if (currentPhase && currentSegment.length > 1) {
+                    segments[currentPhase].push(currentSegment);
+                }
+
+                return segments;
+            };
+
+            const pathFor = (segment, project) => {
+                return segment.map((point, index) => {
+                    const [x, y] = project(point);
+                    return `${index === 0 ? "M" : "L"} ${formatFixed(x, 3)} ${formatFixed(y, 3)}`;
+                }).join(" ");
+            };
+
+            const renderPlot = (simulation) => {
+                const points = simulation.trace;
+                if (points.length < 2) {
+                    plotWrap.hidden = true;
+                    return;
+                }
+
+                const width = 1000;
+                const left = 64;
+                const right = 36;
+                const plotWidth = width - left - right;
+                const minZ = Math.min(0, ...points.map((point) => point.z));
+                const maxZ = Math.max(1, ...points.map((point) => point.z));
+                const zRange = Math.max(1, maxZ - minZ);
+                const scale = plotWidth / zRange;
+                const maxY = Math.max(1, ...points.map((point) => point.y));
+                const maxAbsX = Math.max(1, ...points.map((point) => Math.abs(point.x)));
+
+                const sideTop = 50;
+                const sideDataHeight = Math.max(80, maxY * scale);
+                const sideGroundY = sideTop + sideDataHeight + 10;
+                const planTop = sideGroundY + 78;
+                const planHalfHeight = Math.max(50, maxAbsX * scale + 10);
+                const planCenterY = planTop + planHalfHeight;
+                const height = planCenterY + planHalfHeight + 44;
+                const xForZ = (z) => left + (z - minZ) * scale;
+                const sideProject = (point) => [xForZ(point.z), sideGroundY - point.y * scale];
+                const planProject = (point) => [xForZ(point.z), planCenterY + point.x * scale];
+                const phaseSegments = collectPhaseSegments(points);
+                const pathElements = [];
+
+                for (const [phase, meta] of Object.entries(phaseStyles)) {
+                    for (const segment of phaseSegments[phase]) {
+                        pathElements.push(`<path class="${meta.className}" d="${pathFor(segment, sideProject)}" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>`);
+                        pathElements.push(`<path class="${meta.className}" d="${pathFor(segment, planProject)}" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>`);
+                    }
+                }
+
+                const legend = Object.entries(phaseStyles).map(([phase, meta], index) => {
+                    const x = left + index * 112;
+                    return `<g><line class="${meta.className}" x1="${x}" y1="${height - 18}" x2="${x + 28}" y2="${height - 18}" stroke-width="4" stroke-linecap="round"></line><text class="plot-small" x="${x + 36}" y="${height - 14}">${meta.label}</text></g>`;
+                }).join("");
+
+                plot.setAttribute("viewBox", `0 0 ${width} ${Math.ceil(height)}`);
+                plot.innerHTML = `
+                    <title>Golf ball flight side and plan views</title>
+                    <text class="plot-label" x="${left}" y="28">Side view</text>
+                    <line class="axis" x1="${left}" y1="${sideGroundY}" x2="${width - right}" y2="${sideGroundY}"></line>
+                    <text class="plot-small" x="${width - right - 80}" y="${sideGroundY + 24}">downrange</text>
+                    ${pathElements.filter((_, index) => index % 2 === 0).join("")}
+                    <text class="plot-label" x="${left}" y="${planTop - 24}">Plan view</text>
+                    <line class="axis" x1="${left}" y1="${planCenterY}" x2="${width - right}" y2="${planCenterY}"></line>
+                    <text class="plot-small" x="${left - 28}" y="${planCenterY - planHalfHeight + 8}">L</text>
+                    <text class="plot-small" x="${left - 28}" y="${planCenterY + planHalfHeight}">R</text>
+                    ${pathElements.filter((_, index) => index % 2 === 1).join("")}
+                    ${legend}
+                `;
+                plotWrap.hidden = false;
+            };
+
+            const finishWorker = (worker) => {
+                worker.terminate();
+                if (currentWorker === worker) {
+                    currentWorker = null;
+                }
+                plotButton.textContent = "Plot";
+                updateButtonState();
+            };
+
+            const runSimulation = () => {
+                if (currentWorker !== null || !formIsReady()) {
+                    return;
+                }
+
+                const formData = collectForm();
+                const worker = new Worker("./worker.js", { type: "module" });
+                currentWorker = worker;
+                requestId += 1;
+                const currentRequestId = requestId;
+
+                plotButton.disabled = true;
+                plotButton.textContent = "Plotting";
+                status.textContent = "Running simulation.";
+                highlights.hidden = true;
+                plotWrap.hidden = true;
+                window.sa_metadata = {
+                    speed_unit: formData.speedUnit,
+                    angle_unit: formData.angleUnit,
+                    spin_unit: formData.spinUnit,
+                    temperature_unit: formData.temperatureUnit,
+                    altitude_unit: formData.altitudeUnit
+                };
+                window.sa_event("golf_plot", window.sa_metadata);
+
+                worker.addEventListener("message", (event) => {
+                    if (event.data.requestId !== currentRequestId) {
+                        finishWorker(worker);
+                        return;
+                    }
+
+                    if (event.data.ok) {
+                        status.textContent = "Shot plotted.";
+                        renderHighlights(event.data.simulation, event.data.units);
+                        renderPlot(event.data.simulation);
+                    } else {
+                        status.textContent = `Simulation failed: ${event.data.error}`;
+                    }
+                    finishWorker(worker);
+                });
+
+                worker.addEventListener("error", (event) => {
+                    status.textContent = `Simulation failed: ${event.message}`;
+                    finishWorker(worker);
+                });
+
+                worker.postMessage({
+                    requestId: currentRequestId,
+                    form: formData
+                });
+            };
+
+            form.addEventListener("submit", (event) => {
+                event.preventDefault();
+                runSimulation();
+            });
+
+            updateButtonState();
+        </script>
+        <script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+    </body>
+</html>
