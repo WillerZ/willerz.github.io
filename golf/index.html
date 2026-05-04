@@ -301,6 +301,138 @@
                 return Object.fromEntries(new FormData(form).entries());
             };
 
+            const speedToMph = {
+                mph: (value) => value,
+                mps: (value) => value * 2.2369362921,
+                kph: (value) => value * 0.6213711922
+            };
+
+            const angleToDeg = {
+                deg: (value) => value,
+                rad: (value) => value * 180 / Math.PI
+            };
+
+            const spinToRpm = {
+                rpm: (value) => value,
+                hz: (value) => value * 60,
+                rads: (value) => value * 60 / (2 * Math.PI)
+            };
+
+            const temperatureToF = {
+                f: (value) => value,
+                c: (value) => value * 9 / 5 + 32,
+                k: (value) => (value - 273.15) * 9 / 5 + 32,
+                r: (value) => value - 459.67
+            };
+
+            const altitudeToFt = {
+                ft: (value) => value,
+                m: (value) => value * 3.280839895
+            };
+
+            const convertForAnalytics = (value, unit, converters) => {
+                const converter = converters[unit];
+                const numericValue = Number(value);
+                if (typeof converter !== "function" || !Number.isFinite(numericValue)) {
+                    return NaN;
+                }
+                return converter(numericValue);
+            };
+
+            const bucket = (value, labels, limits) => {
+                if (!Number.isFinite(value)) {
+                    return "unknown";
+                }
+                for (let index = 0; index < limits.length; index += 1) {
+                    if (value < limits[index]) {
+                        return labels[index];
+                    }
+                }
+                return labels.at(-1);
+            };
+
+            const zeroAwareBucket = (value, labels, limits) => {
+                if (!Number.isFinite(value)) {
+                    return "unknown";
+                }
+                if (Math.abs(value) < 0.5) {
+                    return labels[0];
+                }
+                return bucket(Math.abs(value), labels.slice(1), limits);
+            };
+
+            const buildCommonAnalyticsMetadata = (formData) => {
+                const speedMph = convertForAnalytics(formData.ballSpeed, formData.speedUnit, speedToMph);
+                const launchDeg = convertForAnalytics(formData.launchAngle, formData.angleUnit, angleToDeg);
+                const backspinRpm = convertForAnalytics(formData.backspin, formData.spinUnit, spinToRpm);
+                const sidespinRpm = convertForAnalytics(formData.sidespin, formData.spinUnit, spinToRpm);
+                const temperatureF = convertForAnalytics(formData.temperature, formData.temperatureUnit, temperatureToF);
+                const altitudeFt = convertForAnalytics(formData.altitude, formData.altitudeUnit, altitudeToFt);
+                const humidity = Number(formData.humidity);
+
+                return {
+                    speed_unit: formData.speedUnit,
+                    angle_unit: formData.angleUnit,
+                    spin_unit: formData.spinUnit,
+                    temperature_unit: formData.temperatureUnit,
+                    altitude_unit: formData.altitudeUnit,
+                    speed_bucket: bucket(speedMph, ["<100", "100-130", "130-160", "160+"], [100, 130, 160]),
+                    launch_bucket: bucket(launchDeg, ["<8", "8-14", "14-20", "20+"], [8, 14, 20]),
+                    backspin_bucket: bucket(backspinRpm, ["<1500", "1500-2500", "2500-3500", "3500+"], [1500, 2500, 3500]),
+                    sidespin_direction: Math.abs(sidespinRpm) < 0.5 ? "zero" : sidespinRpm > 0 ? "right" : "left",
+                    sidespin_bucket: zeroAwareBucket(sidespinRpm, ["0", "<250", "250-750", "750+"], [250, 750]),
+                    temperature_bucket: bucket(temperatureF, ["<40", "40-60", "60-80", "80+"], [40, 60, 80]),
+                    altitude_bucket: bucket(altitudeFt, ["<500", "500-3000", "3000-6000", "6000+"], [500, 3000, 6000]),
+                    humidity_bucket: bucket(humidity, ["<25", "25-50", "50-75", "75+"], [25, 50, 75])
+                };
+            };
+
+            const buildSuccessAnalyticsMetadata = (simulation, durationMs) => {
+                const highlights = simulation.highlights;
+                return {
+                    duration_bucket: bucket(durationMs, ["<250ms", "250-1000ms", "1-3s", "3s+"], [250, 1000, 3000]),
+                    carry_bucket: bucket(highlights.carryDistanceM * 1.093613298, ["<150", "150-225", "225-275", "275+"], [150, 225, 275]),
+                    total_bucket: bucket(highlights.totalDistanceM * 1.093613298, ["<175", "175-250", "250-300", "300+"], [175, 250, 300]),
+                    offline_bucket: bucket(Math.abs(highlights.offlineTotalM) * 1.093613298, ["<5", "5-15", "15-30", "30+"], [5, 15, 30])
+                };
+            };
+
+            const classifyErrorType = (message, source) => {
+                if (source === "worker") {
+                    return "worker";
+                }
+
+                const normalized = String(message ?? "").toLowerCase();
+                if (
+                    normalized.includes("expected") ||
+                    normalized.includes("must") ||
+                    normalized.includes("unsupported") ||
+                    normalized.includes("humidity") ||
+                    normalized.includes("temperature") ||
+                    normalized.includes("altitude") ||
+                    normalized.includes("ball speed") ||
+                    normalized.includes("backspin")
+                ) {
+                    return "validation";
+                }
+                if (
+                    normalized.includes("simulation") ||
+                    normalized.includes("converge") ||
+                    normalized.includes("root") ||
+                    normalized.includes("step") ||
+                    normalized.includes("impact") ||
+                    normalized.includes("rk")
+                ) {
+                    return "simulation";
+                }
+                return "unknown";
+            };
+
+            const trackGolfEvent = (eventName, metadata) => {
+                window.sa_metadata = metadata;
+                window.sa_event(eventName, metadata);
+            };
+
             const formatFixed = (value, decimals) => {
                 return Number(value).toFixed(decimals).replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
             };
@@ -450,7 +582,24 @@
                 }
 
                 const formData = collectForm();
-                const worker = new Worker("./worker.js", { type: "module" });
+                const startedAt = performance.now();
+                const attemptMetadata = buildCommonAnalyticsMetadata(formData);
+                trackGolfEvent("golf_plot_attempt", attemptMetadata);
+
+                let worker;
+                try {
+                    worker = new Worker("./worker.js", { type: "module" });
+                } catch (error) {
+                    status.textContent = `Simulation failed: ${error instanceof Error ? error.message : String(error)}`;
+                    trackGolfEvent("golf_plot_error", {
+                        ...attemptMetadata,
+                        error_type: "worker"
+                    });
+                    plotButton.textContent = "Plot";
+                    updateButtonState();
+                    return;
+                }
+
                 currentWorker = worker;
                 requestId += 1;
                 const currentRequestId = requestId;
@@ -460,14 +609,6 @@
                 status.textContent = "Running simulation.";
                 highlights.hidden = true;
                 plotWrap.hidden = true;
-                window.sa_metadata = {
-                    speed_unit: formData.speedUnit,
-                    angle_unit: formData.angleUnit,
-                    spin_unit: formData.spinUnit,
-                    temperature_unit: formData.temperatureUnit,
-                    altitude_unit: formData.altitudeUnit
-                };
-                window.sa_event("golf_plot", window.sa_metadata);
 
                 worker.addEventListener("message", (event) => {
                     if (event.data.requestId !== currentRequestId) {
@@ -477,16 +618,28 @@
 
                     if (event.data.ok) {
                         status.textContent = "Shot plotted.";
+                        trackGolfEvent("golf_plot", {
+                            ...attemptMetadata,
+                            ...buildSuccessAnalyticsMetadata(event.data.simulation, performance.now() - startedAt)
+                        });
                         renderHighlights(event.data.simulation, event.data.units);
                         renderPlot(event.data.simulation);
                     } else {
                         status.textContent = `Simulation failed: ${event.data.error}`;
+                        trackGolfEvent("golf_plot_error", {
+                            ...attemptMetadata,
+                            error_type: classifyErrorType(event.data.error, "message")
+                        });
                     }
                     finishWorker(worker);
                 });
 
                 worker.addEventListener("error", (event) => {
                     status.textContent = `Simulation failed: ${event.message}`;
+                    trackGolfEvent("golf_plot_error", {
+                        ...attemptMetadata,
+                        error_type: classifyErrorType(event.message, "worker")
+                    });
                     finishWorker(worker);
                 });
 
