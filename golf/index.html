@@ -145,7 +145,7 @@
                             <legend>Launch</legend>
                             <div class="control-grid">
                                 <label for="ballSpeed">Ball speed</label>
-                                <input id="ballSpeed" name="ballSpeed" type="number" min="0" step="any" required placeholder="130">
+                                <input id="ballSpeed" name="ballSpeed" type="number" min="0" step="any" required value="130">
                                 <select id="speedUnit" name="speedUnit" aria-label="Ball speed unit">
                                     <option value="mph" selected>mph</option>
                                     <option value="mps">m/s</option>
@@ -153,18 +153,18 @@
                                 </select>
 
                                 <label for="launchAngle">Launch angle</label>
-                                <input id="launchAngle" name="launchAngle" type="number" step="any" required placeholder="16">
+                                <input id="launchAngle" name="launchAngle" type="number" step="any" required value="16">
                                 <select id="angleUnit" name="angleUnit" aria-label="Angle unit">
                                     <option value="deg" selected>deg</option>
                                     <option value="rad">rad</option>
                                 </select>
 
                                 <label for="azimuth">Azimuth</label>
-                                <input id="azimuth" name="azimuth" type="number" step="any" required placeholder="0">
+                                <input id="azimuth" name="azimuth" type="number" step="any" required value="0">
                                 <span class="unit-note">same angle unit</span>
 
                                 <label for="backspin">Backspin</label>
-                                <input id="backspin" name="backspin" type="number" min="0" step="any" required placeholder="2500">
+                                <input id="backspin" name="backspin" type="number" min="0" step="any" required value="2500">
                                 <select id="spinUnit" name="spinUnit" aria-label="Spin unit">
                                     <option value="rpm" selected>rpm</option>
                                     <option value="hz">Hz</option>
@@ -172,7 +172,7 @@
                                 </select>
 
                                 <label for="sidespin">Sidespin</label>
-                                <input id="sidespin" name="sidespin" type="number" step="any" required placeholder="0">
+                                <input id="sidespin" name="sidespin" type="number" step="any" required value="0">
                                 <span class="unit-note">right positive</span>
                             </div>
                         </fieldset>
@@ -241,7 +241,7 @@
                     </div>
                 </section>
                 <aside id="sidebar">
-                    <p>Flight model source is vendored from the local ball-flight library.</p>
+                    <p>Flight model by Phil Willoughby.</p>
                     <p>
                         <a href="https://dashboard.simpleanalytics.com/willerz.github.io?utm_source=willerz.github.io&utm_content=badge&affiliate=gahop" referrerpolicy="origin" target="_blank">
                             <picture>
